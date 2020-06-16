@@ -1,0 +1,9 @@
+[package]
+name = "rise"
+version = "0.1.0"
+authors = ["Jack Bass <jeb4571@rit.edu>"]
+
+
+[dependencies]
+gl = "0.6.0"
+glutin = "*"
