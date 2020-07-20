@@ -5,5 +5,8 @@ authors = ["Jack Bass <jeb4571@rit.edu>"]
 
 
 [dependencies]
-gl = "0.6.0"
-glutin = "*"
+winit = "0.22.2"
+wgpu = "0.5.2"
+image = "0.23"
+log = "0.4"
+cgmath = "0.17.0"

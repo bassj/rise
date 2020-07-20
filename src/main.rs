@@ -1,63 +1,76 @@
-extern crate gl;
-extern crate glutin;
+extern crate winit;
 
-mod renderer;
+#[allow(unused_imports)]
+mod graphics;
+mod game;
 
-use renderer::*;
+use std::time::Instant;
+use std::time::Duration;
 
-use glutin::event::{Event, WindowEvent};
-use glutin::event_loop::{ControlFlow, EventLoop};
-use glutin::window::WindowBuilder;
-use glutin::ContextBuilder;
+use winit::{
+    event::*,
+    event_loop::{EventLoop, ControlFlow},
+    window::{Window, WindowBuilder},
+};
+
+use game::Game;
+
+
 
 fn main() {
+    //TODO: Read from file.
+    let env = game::GameEnvironment {
+        window: game::Window {
+            width: 800.,
+            height: 600.,
+            resizable: false,
+            title: "RISE Test Window",
+        }
+    };
+    
     //Build the window.
-    let el = EventLoop::new();
-    let wb = WindowBuilder::new().with_title("A fantastic window!");
-
-    let windowed_context = ContextBuilder::new().build_windowed(wb, &el).unwrap();
-
-    let windowed_context = unsafe { windowed_context.make_current().unwrap() };
+    let event_loop = EventLoop::new();
+    let window = WindowBuilder::new()
+        .with_inner_size(winit::dpi::PhysicalSize::new(env.window.width, env.window.height))
+        .with_resizable(env.window.resizable)
+        .with_title(env.window.title)
+        .build(&event_loop)
+        .unwrap();
 
     //Set up the renderer.
+    //let renderer = graphics::Renderer::new();
 
-    let renderer = GLRenderer::new(&windowed_context);
+    //Initialize the game
+    //let mut game = Game::new(env, &renderer);
 
-    //Create our shader.
-
-    let mut shader: GLShader = GLShader::new();
-
-    shader.attach_src("./ast/shader/standard.frag", gl::FRAGMENT_SHADER, &renderer);
-    shader.attach_src("./ast/shader/standard.vert", gl::VERTEX_SHADER, &renderer);
-
-    shader.create(&renderer);
-
-    //Create our mesh.
-
-    let mut mesh: Mesh = Mesh::new();
-
-    mesh.add_vert((0.5, 0.5));
-    mesh.add_vert((0.5, -0.5));
-    mesh.add_vert((-0.5, -0.5));
-
-    mesh.set_indices(vec![0, 1, 2]);
-
-    let mut drawable: Drawable = Drawable::new();
-
-    drawable.set_mesh(mesh);
-    drawable.set_shader(shader);
-
-    drawable.create(&renderer);
     //Start the main loop.
+    
+    let mut last_frame = Instant::now();
 
-    el.run(move |event, _, control_flow| {
+
+    event_loop.run(move |event, _, control_flow| {
+        match event {
+            Event::WindowEvent {
+                ref event, 
+                window_id
+            } if window_id == window.id() => {
+                
+            },
+            Event::RedrawRequested(_) => {
+                //game.render(&renderer);
+            },
+            Event::MainEventsCleared => {
+                window.request_redraw();
+            }
+            _ => ()
+        }
+    });
+
+    /*el.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Wait;
 
         match event {
             Event::LoopDestroyed => {
-                //Cleanup.
-                drawable.destroy(&renderer);
-
                 return;
             }
             Event::WindowEvent { event, .. } => match event {
@@ -69,14 +82,31 @@ fn main() {
                 _ => (),
             },
             Event::RedrawRequested(_) => {
+                //Calculate time since last frame.
+                let frame_time = Instant::now();
+                let delta = frame_time - last_frame;
+                last_frame = frame_time;
+                let delta_flt: f32 = delta.as_secs_f32();//Delta time in seconds.
+
                 renderer.clear();
 
-                drawable.render(&renderer);
+                //Render the frame.
+                game.render(&renderer);
 
+                //update our scene
+                game.update(delta_flt);
 
+                //update window
                 windowed_context.swap_buffers().unwrap();
-            }
-            _ => (),
+            },
+            Event::MainEventsCleared => {
+                windowed_context.window().request_redraw();
+            },
+            _ => {
+                
+                let next_frame = Instant::now() + Duration::from_millis(16); //TODO: 
+                *control_flow = ControlFlow::WaitUntil(next_frame);
+            },
         }
-    });
+    });*/
 }
