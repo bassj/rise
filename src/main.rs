@@ -1,12 +1,12 @@
 extern crate winit;
 
-#[allow(unused_imports)]
+
 mod graphics;
 mod game;
 
 use std::time::Instant;
-use std::time::Duration;
 
+#[allow(unused_imports)]
 use winit::{
     event::*,
     event_loop::{EventLoop, ControlFlow},
@@ -38,26 +38,32 @@ fn main() {
         .unwrap();
 
     //Set up the renderer.
-    //let renderer = graphics::Renderer::new();
+    use futures::executor::block_on;
+    let mut renderer = block_on(graphics::Renderer::new(&window));
 
     //Initialize the game
-    //let mut game = Game::new(env, &renderer);
+    let mut game = Game::new(env, &renderer);
+
 
     //Start the main loop.
     
     let mut last_frame = Instant::now();
-
 
     event_loop.run(move |event, _, control_flow| {
         match event {
             Event::WindowEvent {
                 ref event, 
                 window_id
-            } if window_id == window.id() => {
-                
+            } if window_id == window.id() => if !renderer.input(event, control_flow) {
+                //Process input.
             },
             Event::RedrawRequested(_) => {
-                //game.render(&renderer);
+                let frame_time = Instant::now();
+                let delta = frame_time - last_frame;
+                last_frame = frame_time;
+                let delta_flt: f32 = delta.as_secs_f32();
+
+                game.render(&mut renderer);
             },
             Event::MainEventsCleared => {
                 window.request_redraw();
@@ -65,48 +71,4 @@ fn main() {
             _ => ()
         }
     });
-
-    /*el.run(move |event, _, control_flow| {
-        *control_flow = ControlFlow::Wait;
-
-        match event {
-            Event::LoopDestroyed => {
-                return;
-            }
-            Event::WindowEvent { event, .. } => match event {
-                WindowEvent::Resized(physical_size) => {
-                    windowed_context.resize(physical_size);
-                    renderer.resize(physical_size);
-                }
-                WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
-                _ => (),
-            },
-            Event::RedrawRequested(_) => {
-                //Calculate time since last frame.
-                let frame_time = Instant::now();
-                let delta = frame_time - last_frame;
-                last_frame = frame_time;
-                let delta_flt: f32 = delta.as_secs_f32();//Delta time in seconds.
-
-                renderer.clear();
-
-                //Render the frame.
-                game.render(&renderer);
-
-                //update our scene
-                game.update(delta_flt);
-
-                //update window
-                windowed_context.swap_buffers().unwrap();
-            },
-            Event::MainEventsCleared => {
-                windowed_context.window().request_redraw();
-            },
-            _ => {
-                
-                let next_frame = Instant::now() + Duration::from_millis(16); //TODO: 
-                *control_flow = ControlFlow::WaitUntil(next_frame);
-            },
-        }
-    });*/
 }

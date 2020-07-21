@@ -1,4 +1,7 @@
-use graphics::Renderer;
+use crate::graphics::Renderer;
+use crate::graphics::RenderObject;
+use crate::graphics::Mesh;
+use crate::graphics::Material;
 
 pub struct Window {
     pub width: f32,
@@ -11,20 +14,29 @@ pub struct GameEnvironment {
     pub window: Window,
 }
 
-pub struct Game {}
+pub struct Game {
+    triangle: RenderObject
+}
 
 impl Game {
     pub fn new(env: GameEnvironment, renderer: &Renderer) -> Game {
-        Game {}
+
+        let triangle_mesh = Mesh::new();
+
+        let standard_material = Material::new();
+
+        let triangle = renderer.create_object(triangle_mesh, standard_material.create_instance());
+        
+        Game {
+            triangle
+        }
     }
 
     pub fn update(&mut self, delta: f32) {
         unimplemented!();
     }
 
-    pub fn render(&mut self, renderer: &Renderer) {
-        renderer.clear();
-        
-        //unimplemented!();
+    pub fn render(&mut self, renderer: &mut Renderer) {
+        renderer.render(&self.triangle);
     }
 }
