@@ -10,11 +10,15 @@ use super::material::Material;
 use super::material::MaterialInstance;
 
 pub struct RenderObject {
-    
+    render_pipeline: wgpu::RenderPipeline,
+    num_vertices: u32,
+    num_indices: u32,
+    vertex_buffer: wgpu::Buffer,
+    index_buffer: wgpu::Buffer  
 }
 
 impl RenderObject {
-
+    
 }
 
 pub struct Renderer {
@@ -70,6 +74,10 @@ impl Renderer {
     }
 
     pub fn create_object(&self, mesh : Mesh, material : MaterialInstance) -> RenderObject {
+        //Convert our mesh into gpu buffers.
+
+        
+        
         unimplemented!();
     }
 

@@ -1,7 +1,4 @@
-use crate::graphics::Renderer;
-use crate::graphics::RenderObject;
-use crate::graphics::Mesh;
-use crate::graphics::Material;
+use crate::graphics::*;
 
 pub struct Window {
     pub width: f32,
@@ -21,7 +18,27 @@ pub struct Game {
 impl Game {
     pub fn new(env: GameEnvironment, renderer: &Renderer) -> Game {
 
-        let triangle_mesh = Mesh::new();
+        let mut triangle_mesh = Mesh::new();
+
+        triangle_mesh.add_verts(&[
+            Vertex {
+                position: cgmath::Vector3::new(0.0, 0.5, 0.0),
+                normal: cgmath::Vector3::new(0., 0., 0.),
+                uv: cgmath::Vector2::new(0., 0.)
+            },
+            Vertex {
+                position: cgmath::Vector3::new(-0.5, -0.5, 0.0),
+                normal: cgmath::Vector3::new(0., 0., 0.),
+                uv: cgmath::Vector2::new(0., 0.)
+            },
+            Vertex {
+                position: cgmath::Vector3::new(0.5, -0.5, 0.0),
+                normal: cgmath::Vector3::new(0., 0., 0.),
+                uv: cgmath::Vector2::new(0., 0.)
+            }
+        ]);
+
+        triangle_mesh.set_indices(&[0, 1, 2]);
 
         let standard_material = Material::new();
 
@@ -38,5 +55,5 @@ impl Game {
 
     pub fn render(&mut self, renderer: &mut Renderer) {
         renderer.render(&self.triangle);
-    }
+    }   
 }
