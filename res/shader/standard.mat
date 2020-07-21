@@ -1,0 +1,7 @@
+#PROGSRC VERTEX
+#INCLUDE ./standard.vert
+#ENDSRC
+
+#PROGSRC FRAGMENT
+#INCLUDE ./standard.frag
+#ENDSRC
