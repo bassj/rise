@@ -10,13 +10,12 @@ use wgpu::{Adapter, Device, Queue, Surface, SwapChain, SwapChainDescriptor};
 use super::material::Material;
 use super::mesh::Mesh;
 
-use serde_json::Result;
-
 pub struct RenderObject {
     num_vertices: u32,
     num_indices: u32,
     vertex_buffer: wgpu::Buffer,
     index_buffer: wgpu::Buffer,
+    material: MaterialInstance
 }
 
 impl RenderObject {}
@@ -29,7 +28,6 @@ pub struct Renderer {
     sc_desc: SwapChainDescriptor,
     swap_chain: SwapChain,
     size: PhysicalSize<u32>,
-    active_material: Option<Material>,
 }
 
 impl Renderer {
@@ -73,13 +71,8 @@ impl Renderer {
             device,
             queue,
             sc_desc,
-            swap_chain,
-            active_material: None,
+            swap_chain
         }
-    }
-
-    pub fn use_material(&mut self, material: Material) {
-        self.active_material = Some(material);
     }
 
     //For the time being, our clear will just be a render pass that clears the depth buffer and the frame buffer.
@@ -112,11 +105,10 @@ impl Renderer {
                 depth_stencil_attachment: None,
             });
 
-            let mat = self.active_material.as_ref().unwrap();
 
             render_pass.set_vertex_buffer(0, &scene.vertex_buffer, 0, 0);
             render_pass.set_index_buffer(&scene.index_buffer, 0, 0);
-            render_pass.set_pipeline(&mat.render_pipeline);
+            render_pass.set_pipeline(scene.material.get_render_pipeline());
             render_pass.draw_indexed(0..scene.num_indices, 0, 0..1);
         }
         self.queue.submit(&[encoder.finish()])
@@ -149,12 +141,14 @@ impl Renderer {
     }
 }
 
+use super::material::MaterialInstance;
+
 pub trait RenderObjectBuilder {
-    fn create_object(&self, mesh: &Mesh) -> RenderObject;
+    fn create_object<'m>(&self, mesh: &Mesh, material: MaterialInstance) -> RenderObject;
 }
 
 impl RenderObjectBuilder for Renderer {
-    fn create_object(&self, mesh: &Mesh) -> RenderObject {
+    fn create_object<'m>(&self, mesh: &Mesh, material: MaterialInstance) -> RenderObject {
         //Convert our mesh into gpu buffers.
         let vertex_buffer = self.device.create_buffer_with_data(
             bytemuck::cast_slice(&mesh.vertices[..]),
@@ -169,6 +163,7 @@ impl RenderObjectBuilder for Renderer {
         let num_vertices = mesh.vertices.len() as u32;
         let num_indices = mesh.indices.len() as u32;
         RenderObject {
+            material,
             vertex_buffer,
             index_buffer,
             num_vertices,

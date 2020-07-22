@@ -12,6 +12,7 @@ pub struct GameEnvironment {
 }
 
 pub struct Game {
+    standard_material: Material,
     triangle: RenderObject
 }
 
@@ -42,11 +43,12 @@ impl Game {
 
         let standard_material = renderer.create_material("./res/shader/standard.mat");
 
-        renderer.use_material(standard_material);
+        let material_instance = standard_material.create_instance();
 
-        let triangle = renderer.create_object(&triangle_mesh);
-        
-        Game {
+        let triangle = renderer.create_object(&triangle_mesh, material_instance);
+
+        Game {  
+            standard_material,
             triangle
         }
     }

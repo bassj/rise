@@ -1,5 +1,6 @@
 mod material;
 pub use self::material::Material;
+pub use self::material::MaterialInstance;
 pub use self::material::MaterialBuilder;
 
 mod mesh;
