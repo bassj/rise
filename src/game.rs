@@ -16,7 +16,7 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn new(env: GameEnvironment, renderer: &Renderer) -> Game {
+    pub fn new(_env: GameEnvironment, renderer: &mut Renderer) -> Game {
 
         let mut triangle_mesh = Mesh::new();
 
@@ -40,9 +40,11 @@ impl Game {
 
         triangle_mesh.set_indices(&[0, 1, 2]);
 
-        let standard_material = Material::new();
+        let standard_material = renderer.create_material("./res/shader/standard.mat");
 
-        let triangle = renderer.create_object(triangle_mesh, standard_material.create_instance());
+        renderer.use_material(standard_material);
+
+        let triangle = renderer.create_object(&triangle_mesh);
         
         Game {
             triangle

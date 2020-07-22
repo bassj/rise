@@ -42,7 +42,7 @@ fn main() {
     let mut renderer = block_on(graphics::Renderer::new(&window));
 
     //Initialize the game
-    let mut game = Game::new(env, &renderer);
+    let mut game = Game::new(env, &mut renderer);
 
 
     //Start the main loop.
