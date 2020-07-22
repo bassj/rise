@@ -8,8 +8,9 @@ use winit::window::Window;
 use wgpu::{Adapter, Device, Queue, Surface, SwapChain, SwapChainDescriptor};
 
 use super::material::Material;
-use super::material::MaterialInstance;
 use super::mesh::Mesh;
+
+use serde_json::Result;
 
 pub struct RenderObject {
     num_vertices: u32,
@@ -180,34 +181,32 @@ use super::material::MaterialBuilder;
 
 impl MaterialBuilder for Renderer {
     fn create_material<P: AsRef<Path>>(&self, material: P) -> Material {
-        /*//Parse the material.
-        use std::fs::File;
-        use std::io::{self, BufRead};
-        let material_file = File::open(material).unwrap();
-        let material_reader = io::BufReader::new(material_file);
-        for line in material_reader.lines() {
-            if let Ok(ln) = line {
-                println!("{}", ln);
-            }
-        }*/
-        let vs_src = include_str!("../../res/shader/standard.vert");
-        let fs_src = include_str!("../../res/shader/standard.frag");
+
+        let shader_directory = (material.as_ref() as &Path).parent().unwrap();
+
+        let material_layout : serde_json::Value = serde_json::from_str(&std::fs::read_to_string(material.as_ref() as &Path).unwrap()).unwrap();
+
+        let vs_path = shader_directory.join(material_layout["vertex"]["source"].as_str().unwrap());
+        let fs_path = shader_directory.join(material_layout["fragment"]["source"].as_str().unwrap());
+
+        let vs_src = std::fs::read_to_string(&vs_path).unwrap();
+        let fs_src = std::fs::read_to_string(&fs_path).unwrap();
 
         let mut compiler = shaderc::Compiler::new().unwrap();
         let vs_spirv = compiler
             .compile_into_spirv(
-                vs_src,
+                &vs_src,
                 shaderc::ShaderKind::Vertex,
-                "shader.vert",
+                vs_path.file_name().unwrap().to_str().unwrap(),
                 "main",
                 None,
             )
             .unwrap();
         let fs_spirv = compiler
             .compile_into_spirv(
-                fs_src,
+               &fs_src,
                 shaderc::ShaderKind::Fragment,
-                "shader.frag",
+                fs_path.file_name().unwrap().to_str().unwrap(),
                 "main",
                 None,
             )

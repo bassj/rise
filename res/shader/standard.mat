@@ -1,7 +1,8 @@
-#PROGSRC VERTEX
-#INCLUDE ./standard.vert
-#ENDSRC
-
-#PROGSRC FRAGMENT
-#INCLUDE ./standard.frag
-#ENDSRC
+{
+    "vertex": {
+        "source": "./standard.vert"
+    },
+    "fragment": {
+        "source": "./standard.frag"
+    }
+}
