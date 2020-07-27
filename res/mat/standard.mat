@@ -1,0 +1,8 @@
+{
+    "vertex": {
+        "source": "../shader/standard.vert"
+    },
+    "fragment": {
+        "source": "../shader/standard.frag"
+    }
+}

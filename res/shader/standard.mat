@@ -1,8 +1,0 @@
-{
-    "vertex": {
-        "source": "./standard.vert"
-    },
-    "fragment": {
-        "source": "./standard.frag"
-    }
-}
