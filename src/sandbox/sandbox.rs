@@ -9,9 +9,9 @@ impl Triangle {
         use rise::point;
 
         let vertices = vec!(
-            point!(0.0, 0.5, 0.0),
-            point!(-0.5, -0.5, 0.0),
-            point!(0.5, -0.5, 0.0)
+            point!(0.0, 0.5, -1.0),
+            point!(-0.5, -0.5, -1.0),
+            point!(0.5, -0.5, -1.0)
         );
 
         let indices : Vec<u16> = vec!(0, 1, 2);
@@ -50,18 +50,20 @@ impl rise::graphics::Drawable for Triangle {
 
 struct Game {
     triangle: Triangle,
-    _standard_material: rise::graphics::Material,
+    standard_material: std::rc::Rc<rise::graphics::Material>,
 }
 
 impl rise::core::Application for Game {
     fn new(render_context: &mut rise::graphics::RenderContext) -> Game {
         let standard_material = rise::graphics::Material::load(render_context, "res/mat/standard.mat");
-        
+       
+        use rise::graphics::MaterialInstanceBuilder;
+
         let triangle = Triangle::new(render_context, standard_material.create_instance());
 
         Game {
             triangle,
-            _standard_material: standard_material,
+            standard_material,
         }
     }
     
@@ -70,12 +72,18 @@ impl rise::core::Application for Game {
     fn render(&self, render_context: &mut rise::graphics::RenderContext) {
 
         let camera_uniform = {
-
+            use cgmath::SquareMatrix;
+            let proj_mat = cgmath::perspective(cgmath::Deg(60.0), 800.0 / 600.0, 0.1, 100.);
+            let view_mat = cgmath::Matrix4::identity();
+        
+            rise::graphics::CameraUniform::new(view_mat, proj_mat)
         };
 
+        self.standard_material.as_ref().set_camera(render_context, camera_uniform);    
+        
         let mut frame = rise::graphics::begin_frame(render_context);
 
-        frame.render(&[&self.triangle], camera_uniform);
+        frame.render(&[&self.triangle]);
         
         rise::graphics::end_frame(frame);
     }

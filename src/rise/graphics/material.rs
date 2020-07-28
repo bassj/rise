@@ -1,7 +1,24 @@
+const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::new(
+    1.0, 0.0, 0.0, 0.0,
+    0.0, 1.0, 0.0, 0.0,
+    0.0, 0.0, 0.5, 0.0,
+    0.0, 0.0, 0.5, 1.0,
+);
+
+
 #[derive(Copy, Clone, Debug)]
 pub struct CameraUniform {
     view_mat: cgmath::Matrix4<f32>,
     proj_mat: cgmath::Matrix4<f32>
+}
+
+impl CameraUniform {
+    pub fn new(view_mat: cgmath::Matrix4<f32>, proj_mat: cgmath::Matrix4<f32>) -> CameraUniform {
+        CameraUniform {
+            view_mat,
+            proj_mat: OPENGL_TO_WGPU_MATRIX * proj_mat
+        }
+    }
 }
 
 unsafe impl bytemuck::Zeroable for CameraUniform {}
@@ -34,8 +51,8 @@ impl UniformManager {
 }
 
 pub struct Material {
-    render_pipeline: std::rc::Rc<wgpu::RenderPipeline>,
-    uniforms: std::rc::Rc<UniformManager>
+    render_pipeline: wgpu::RenderPipeline,
+    uniforms: UniformManager
 }
 
 impl Material {
@@ -144,12 +161,12 @@ impl Material {
         );
 
         Material {
-            render_pipeline: std::rc::Rc::new(render_pipeline),
-            uniforms: std::rc::Rc::new(uniforms)
+            render_pipeline,
+            uniforms
         }
     }
 
-    pub fn load<P: AsRef<std::path::Path>>(render_context: &crate::graphics::RenderContext, path: P) -> Material {
+    pub fn load<P: AsRef<std::path::Path>>(render_context: &crate::graphics::RenderContext, path: P) -> std::rc::Rc<Material> {
 
         let material_src = std::fs::read_to_string(path).unwrap();
 
@@ -162,28 +179,40 @@ impl Material {
         let fs_spirv = std::fs::read(fs_path).unwrap();
         let vs_spirv = std::fs::read(vs_path).unwrap();
 
-        Material::new(render_context, vs_spirv, fs_spirv)
+        std::rc::Rc::new(Material::new(render_context, vs_spirv, fs_spirv))
     }
 
-    pub fn create_instance(&self) -> MaterialInstance {
-        MaterialInstance {
-            render_pipeline: self.render_pipeline.clone(),
-            uniforms: self.uniforms.clone()
-        }
+    pub fn set_camera(&self, render_context: &crate::graphics::RenderContext, camera: CameraUniform) {
+        self.uniforms.set_camera(render_context, camera);
+    }
+
+    pub fn get_render_pipeline(&self) -> &wgpu::RenderPipeline {
+        &self.render_pipeline
+    }
+
+    pub fn get_uniforms(&self) -> &UniformManager {
+        &self.uniforms
     }
 }
 
 pub struct MaterialInstance {
-    render_pipeline: std::rc::Rc<wgpu::RenderPipeline>,
-    uniforms: std::rc::Rc<UniformManager>
+    base_material: std::rc::Rc<Material>,
 }
 
 impl MaterialInstance {
-    pub fn get_render_pipeline(&self) -> &wgpu::RenderPipeline {
-        self.render_pipeline.as_ref()
+    pub fn get_base_material(&self) -> &Material {
+        self.base_material.as_ref()
     }
+}
 
-    pub fn get_uniforms(&self) -> &UniformManager {
-        self.uniforms.as_ref()
+pub trait MaterialInstanceBuilder {
+   fn create_instance(&self) -> MaterialInstance;
+}
+
+impl MaterialInstanceBuilder for std::rc::Rc<Material> {
+    fn create_instance(&self) -> MaterialInstance {
+        MaterialInstance {
+            base_material: self.clone()
+        }
     }
 }

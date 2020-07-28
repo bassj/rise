@@ -92,7 +92,7 @@ pub struct Frame<'r> {
 }
 
 impl<'r> Frame<'r> {
-    pub fn render<D: Drawable>(&mut self, objects: &[&D], camera: crate::graphics::CameraUniform) {
+    pub fn render<D: Drawable>(&mut self, objects: &[&D]) {
         let mut render_pass = self.encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             color_attachments: &[
                 wgpu::RenderPassColorAttachmentDescriptor {
@@ -111,12 +111,8 @@ impl<'r> Frame<'r> {
             depth_stencil_attachment: None,
         });
 
-
-
         for obj in objects {
-            let mat = obj.get_material();
-
-            mat.get_uniforms().set_camera(camera.clone());
+            let mat = obj.get_material().get_base_material();
 
             render_pass.set_bind_group(0, mat.get_uniforms().get_camera(), &[]);
             render_pass.set_pipeline(mat.get_render_pipeline());
