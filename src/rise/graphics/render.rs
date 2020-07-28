@@ -18,7 +18,7 @@ pub struct RenderContext {
     surface: Surface,
     adapter: Adapter,
     pub device: Device,
-    queue: Queue,
+    pub queue: Queue,
     pub sc_desc: SwapChainDescriptor,
     swap_chain: SwapChain,
     size: PhysicalSize<u32>,
@@ -92,7 +92,7 @@ pub struct Frame<'r> {
 }
 
 impl<'r> Frame<'r> {
-    pub fn render<D: Drawable>(&mut self, objects: &[&D]) {
+    pub fn render<D: Drawable>(&mut self, objects: &[&D], camera: crate::graphics::CameraUniform) {
         let mut render_pass = self.encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             color_attachments: &[
                 wgpu::RenderPassColorAttachmentDescriptor {
@@ -111,10 +111,18 @@ impl<'r> Frame<'r> {
             depth_stencil_attachment: None,
         });
 
+
+
         for obj in objects {
-            render_pass.set_pipeline(obj.get_material().get_render_pipeline());
+            let mat = obj.get_material();
+
+            mat.get_uniforms().set_camera(camera.clone());
+
+            render_pass.set_bind_group(0, mat.get_uniforms().get_camera(), &[]);
+            render_pass.set_pipeline(mat.get_render_pipeline());
             render_pass.set_vertex_buffer(0, obj.get_vertex_buffer(), 0, 0);
             render_pass.set_index_buffer(obj.get_index_buffer(), 0, 0);
+
             render_pass.draw_indexed(0..obj.num_indices(), 0, 0..1);
         }
     }

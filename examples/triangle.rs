@@ -69,13 +69,9 @@ impl rise::core::Application for Game {
     
     fn render(&self, render_context: &mut rise::graphics::RenderContext) {
 
-        let camera_uniform = {
-
-        };
-
         let mut frame = rise::graphics::begin_frame(render_context);
 
-        frame.render(&[&self.triangle], camera_uniform);
+        frame.render(&[&self.triangle]);
         
         rise::graphics::end_frame(frame);
     }

@@ -1,8 +1,4 @@
 {
-    "vertex": {
-        "source": "../shader/standard.vert"
-    },
-    "fragment": {
-        "source": "../shader/standard.frag"
-    }
+    "vertex_stage": "res/shader/standard.vert.spv",
+    "fragment_stage": "res/shader/standard.frag.spv"
 }
