@@ -30,6 +30,53 @@ impl Triangle {
     }
 }
 
+struct FPSCamera {
+    position: cgmath::Vector3<f32>,
+    rotation: cgmath::Quaternion<f32>,
+    fov: f32,
+    aspect_ratio: f32,
+    near_plane: f32,
+    far_plane: f32,
+}
+
+impl FPSCamera {
+    pub fn new(render_context: &rise::graphics::RenderContext, fov: f32, far_plane: f32) -> FPSCamera {
+        
+        let aspect_ratio = (render_context.sc_desc.width as f32) / (render_context.sc_desc.height as f32);
+
+        FPSCamera {
+            position: cgmath::Vector3::new(0., 0., 0.),
+            rotation: cgmath::Quaternion::new(0., 0., 0., 0.),
+            fov,
+            aspect_ratio,
+            near_plane: 0.1,
+            far_plane
+        }
+    }
+
+    pub fn view_matrix(&self) -> cgmath::Matrix4<f32> {
+        let view_mat = cgmath::Matrix4::from_translation(self.position);
+
+        view_mat
+    }
+
+    pub fn proj_matrix(&self) -> cgmath::Matrix4<f32> {
+        let proj_mat = cgmath::perspective(cgmath::Deg(self.fov), self.aspect_ratio, self.near_plane, self.far_plane);
+
+        proj_mat
+    }
+}
+
+impl Into<rise::graphics::CameraUniform> for &FPSCamera {
+    fn into(self) -> rise::graphics::CameraUniform {
+        let view_mat : cgmath::Matrix4<f32> = self.view_matrix();
+        let proj_mat : cgmath::Matrix4<f32> = self.proj_matrix();
+
+        rise::graphics::CameraUniform::new(view_mat, proj_mat)
+    }
+}
+
+
 impl rise::graphics::Drawable for Triangle {
     fn get_material(&self) -> &rise::graphics::MaterialInstance {
         &self.material
@@ -51,10 +98,14 @@ impl rise::graphics::Drawable for Triangle {
 struct Game {
     triangle: Triangle,
     standard_material: std::rc::Rc<rise::graphics::Material>,
+    camera: FPSCamera
 }
 
 impl rise::core::Application for Game {
     fn new(render_context: &mut rise::graphics::RenderContext) -> Game {
+        
+        let camera = FPSCamera::new(render_context, 60.0, 100.0);
+        
         let standard_material = rise::graphics::Material::load(render_context, "res/mat/standard.mat");
        
         use rise::graphics::MaterialInstanceBuilder;
@@ -64,22 +115,18 @@ impl rise::core::Application for Game {
         Game {
             triangle,
             standard_material,
+            camera
         }
     }
     
-    fn update(&self, _delta: f32) {}
+    fn update(&mut self, delta: f32) {
+        self.camera.position.x += delta;
+    }
     
     fn render(&self, render_context: &mut rise::graphics::RenderContext) {
 
-        let camera_uniform = {
-            use cgmath::SquareMatrix;
-            let proj_mat = cgmath::perspective(cgmath::Deg(60.0), 800.0 / 600.0, 0.1, 100.);
-            let view_mat = cgmath::Matrix4::identity();
-        
-            rise::graphics::CameraUniform::new(view_mat, proj_mat)
-        };
-
-        self.standard_material.as_ref().set_camera(render_context, camera_uniform);    
+        //Draw the frame through our camera.
+        self.standard_material.as_ref().set_camera(render_context, &self.camera);
         
         let mut frame = rise::graphics::begin_frame(render_context);
 

@@ -182,8 +182,8 @@ impl Material {
         std::rc::Rc::new(Material::new(render_context, vs_spirv, fs_spirv))
     }
 
-    pub fn set_camera(&self, render_context: &crate::graphics::RenderContext, camera: CameraUniform) {
-        self.uniforms.set_camera(render_context, camera);
+    pub fn set_camera<C: Into<CameraUniform>>(&self, render_context: &crate::graphics::RenderContext, camera: C) {
+        self.uniforms.set_camera(render_context, camera.into());
     }
 
     pub fn get_render_pipeline(&self) -> &wgpu::RenderPipeline {

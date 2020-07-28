@@ -6,7 +6,7 @@ use winit::{
 
 pub trait Application {
     fn new(render_context: &mut crate::graphics::RenderContext) -> Self;
-    fn update(&self, delta: f32);
+    fn update(&mut self, delta: f32);
     fn render(&self, render_context: &mut crate::graphics::RenderContext);
     fn process_input(&self, event: &Event<()>);
 }
@@ -51,7 +51,7 @@ pub fn run_application<A: 'static + Application>() {
     let mut render_context = block_on(crate::graphics::RenderContext::create(&window));
 
     //Initialize the application
-    let app : A =  A::new(&mut render_context);
+    let mut app : A =  A::new(&mut render_context);
 
     //Start the main loop.
     use std::time::Instant;
