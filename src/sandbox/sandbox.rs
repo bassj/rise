@@ -30,53 +30,6 @@ impl Triangle {
     }
 }
 
-struct FPSCamera {
-    position: cgmath::Vector3<f32>,
-    rotation: cgmath::Quaternion<f32>,
-    fov: f32,
-    aspect_ratio: f32,
-    near_plane: f32,
-    far_plane: f32,
-}
-
-impl FPSCamera {
-    pub fn new(render_context: &rise::graphics::RenderContext, fov: f32, far_plane: f32) -> FPSCamera {
-        
-        let aspect_ratio = (render_context.sc_desc.width as f32) / (render_context.sc_desc.height as f32);
-
-        FPSCamera {
-            position: cgmath::Vector3::new(0., 0., 0.),
-            rotation: cgmath::Quaternion::new(0., 0., 0., 0.),
-            fov,
-            aspect_ratio,
-            near_plane: 0.1,
-            far_plane
-        }
-    }
-
-    pub fn view_matrix(&self) -> cgmath::Matrix4<f32> {
-        let view_mat = cgmath::Matrix4::from_translation(self.position);
-
-        view_mat
-    }
-
-    pub fn proj_matrix(&self) -> cgmath::Matrix4<f32> {
-        let proj_mat = cgmath::perspective(cgmath::Deg(self.fov), self.aspect_ratio, self.near_plane, self.far_plane);
-
-        proj_mat
-    }
-}
-
-impl Into<rise::graphics::CameraUniform> for &FPSCamera {
-    fn into(self) -> rise::graphics::CameraUniform {
-        let view_mat : cgmath::Matrix4<f32> = self.view_matrix();
-        let proj_mat : cgmath::Matrix4<f32> = self.proj_matrix();
-
-        rise::graphics::CameraUniform::new(view_mat, proj_mat)
-    }
-}
-
-
 impl rise::graphics::Drawable for Triangle {
     fn get_material(&self) -> &rise::graphics::MaterialInstance {
         &self.material
@@ -98,13 +51,33 @@ impl rise::graphics::Drawable for Triangle {
 struct Game {
     triangle: Triangle,
     standard_material: std::rc::Rc<rise::graphics::Material>,
-    camera: FPSCamera
+    camera: rise::core::PerspectiveCamera
+}
+
+trait Controller {
+    fn update(&mut self, delta: f32);
+}
+
+impl Controller for rise::core::PerspectiveCamera {
+    fn update(&mut self, delta: f32) {
+
+        use rise::core::keyboard::Key;
+
+        if rise::core::keyboard::is_pressed(Key::W) {
+            self.position.z -= delta;
+        }
+
+        if rise::core::keyboard::is_pressed(Key::S) {
+            self.position.z += delta;
+        }
+
+    }
 }
 
 impl rise::core::Application for Game {
     fn new(render_context: &mut rise::graphics::RenderContext) -> Game {
         
-        let camera = FPSCamera::new(render_context, 60.0, 100.0);
+        let camera = rise::core::PerspectiveCamera::new(render_context, 60.0, 100.0);
         
         let standard_material = rise::graphics::Material::load(render_context, "res/mat/standard.mat");
        
@@ -120,7 +93,9 @@ impl rise::core::Application for Game {
     }
     
     fn update(&mut self, delta: f32) {
-        self.camera.position.x += delta;
+        rise::core::keyboard::update();
+
+        self.camera.update(delta);
     }
     
     fn render(&self, render_context: &mut rise::graphics::RenderContext) {
@@ -135,7 +110,17 @@ impl rise::core::Application for Game {
         rise::graphics::end_frame(frame);
     }
 
-    fn process_input(&self, _event: &winit::event::Event<()>) {}
+    fn process_input(&self, event: &winit::event::DeviceEvent) {
+
+        match event {
+            &winit::event::DeviceEvent::Key(input) => {
+                rise::core::keyboard::process_input(&input);
+            },
+            _ => {} 
+        }
+
+        
+    }
 }
 
 fn main() {

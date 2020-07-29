@@ -9,5 +9,8 @@ uniform CameraUniform {
 };
 
 void main() {
-    gl_Position = (u_view_mat * u_proj_mat) * vec4(a_position, 1.0);
+
+    mat4 vp_mat =  u_proj_mat * u_view_mat;
+
+    gl_Position = vp_mat * vec4(a_position, 1.0);
 } 

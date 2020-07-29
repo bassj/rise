@@ -8,7 +8,7 @@ pub trait Application {
     fn new(render_context: &mut crate::graphics::RenderContext) -> Self;
     fn update(&mut self, delta: f32);
     fn render(&self, render_context: &mut crate::graphics::RenderContext);
-    fn process_input(&self, event: &Event<()>);
+    fn process_input(&self, event: &DeviceEvent);
 }
 
 pub struct ApplicationEnvironment {
@@ -82,6 +82,12 @@ pub fn run_application<A: 'static + Application>() {
                     }
                     _ => {},
                 }
+            },
+            Event::DeviceEvent {
+                ref event,
+                device_id: DeviceId
+            } => {
+                app.process_input(event);
             },
             Event::RedrawRequested(_) => {
                 let frame_time = Instant::now();
