@@ -6,4 +6,7 @@ mod camera;
 
 pub use camera::{*};
 
-pub mod keyboard;
+
+mod input;
+
+pub use input::{*};

@@ -5,15 +5,20 @@ use winit::{
 };
 
 pub trait Application {
-    fn new(render_context: &mut crate::graphics::RenderContext) -> Self;
+    fn new(env: ApplicationEnvironment, render_context: &mut crate::graphics::RenderContext) -> Self;
     fn update(&mut self, delta: f32);
     fn render(&self, render_context: &mut crate::graphics::RenderContext);
-    fn process_input(&self, event: &DeviceEvent);
+    fn process_event(&mut self, event: &Event<()>);
 }
 
 pub struct ApplicationEnvironment {
-    window: Window,
-    event_loop: EventLoop<()>,
+    window: std::rc::Rc<winit::window::Window>,
+}
+
+impl ApplicationEnvironment {
+    pub fn get_window(&self) -> &winit::window::Window {
+        self.window.as_ref()
+    }
 }
 
 fn build_environment() -> (Window, EventLoop<()>) {
@@ -46,18 +51,24 @@ pub fn run_application<A: 'static + Application>() {
     //Build our application environment.
     let (window, event_loop) = build_environment();
 
+    let window = std::rc::Rc::new(window);
+
     //Set up the renderering context.
     use futures::executor::block_on;
     let mut render_context = block_on(crate::graphics::RenderContext::create(&window));
 
+    let env = ApplicationEnvironment{
+        window: window.clone()
+    };
+
     //Initialize the application
-    let mut app : A =  A::new(&mut render_context);
+    let mut app : A =  A::new(env, &mut render_context);
 
     //Start the main loop.
     use std::time::Instant;
     let mut last_frame = Instant::now();
 
-    event_loop.run(move |event, _, control_flow| {
+    event_loop.run(move |m_event, _, control_flow| {
         
         //If we dont do this, apparently rust won't clean up all the wgpu stuff properly.
         let _ = (
@@ -65,11 +76,11 @@ pub fn run_application<A: 'static + Application>() {
             &app
         );
 
-        match event {
+        match &m_event {
             Event::WindowEvent {
                 ref event,
                 window_id
-            } if window_id == window.id() => {
+            } if window_id == &window.id() => {
                 match event {
                     WindowEvent::CloseRequested => {
                         *control_flow = ControlFlow::Exit;
@@ -80,14 +91,10 @@ pub fn run_application<A: 'static + Application>() {
                     WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
                         render_context.resize(**new_inner_size);
                     }
-                    _ => {},
+                    event => {
+                        app.process_event(&m_event);
+                    },
                 }
-            },
-            Event::DeviceEvent {
-                ref event,
-                device_id: DeviceId
-            } => {
-                app.process_input(event);
             },
             Event::RedrawRequested(_) => {
                 let frame_time = Instant::now();
@@ -103,7 +110,9 @@ pub fn run_application<A: 'static + Application>() {
             Event::MainEventsCleared => {
                 window.request_redraw();
             }
-            _ => ()
+            _ => {
+                app.process_event(&m_event);
+            }
         }
     });
 }

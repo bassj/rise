@@ -23,7 +23,17 @@ impl PerspectiveCamera {
     }
 
     pub fn view_matrix(&self) -> cgmath::Matrix4<f32> {
-        let view_mat = cgmath::Matrix4::from_translation(-self.position);
+
+        use cgmath::Rotation;
+
+        let forward = self.rotation.rotate_vector(cgmath::Vector3::new(0., 0., -1.));
+        let up = self.rotation.rotate_vector(cgmath::Vector3::new(0., 1., 0.));
+
+        let view_mat = cgmath::Matrix4::look_at_dir(
+            cgmath::Point3::from((self.position.x, self.position.y, self.position.z)),
+            forward,
+            up
+        );
 
         view_mat
     }
