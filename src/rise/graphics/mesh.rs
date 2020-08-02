@@ -1,12 +1,16 @@
 #[derive(Copy, Clone, Debug)]
 pub struct Vertex {
-    position: cgmath::Vector3<f32>
+    position: cgmath::Vector3<f32>,
+    normal: cgmath::Vector3<f32>,
+    uv: cgmath::Vector2<f32>,
 }
 
 impl Vertex {
-    pub fn new(position: cgmath::Vector3<f32>) -> Vertex {
+    pub fn new(position: cgmath::Vector3<f32>, normal: cgmath::Vector3<f32>, uv: cgmath::Vector2<f32>) -> Vertex {
         Vertex {
-            position
+            position,
+            normal,
+            uv
         }
     }
     
@@ -20,7 +24,18 @@ impl Vertex {
                     offset: 0,
                     shader_location: 0,
                     format: wgpu::VertexFormat::Float3,
-                }
+                },
+                wgpu::VertexAttributeDescriptor {
+                    offset: mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
+                    shader_location: 1,
+                    format: wgpu::VertexFormat::Float3,
+                },
+                wgpu::VertexAttributeDescriptor {
+                    offset: mem::size_of::<[f32; 6]>() as wgpu::BufferAddress,
+                    shader_location: 2,
+                    format: wgpu::VertexFormat::Float2,
+                },
+                
             ]
         }
     }
@@ -46,6 +61,70 @@ pub struct Mesh {
 }
 
 impl Mesh {
+    pub fn load_from_file<P: AsRef<std::path::Path> + core::fmt::Debug>(path: P) -> Mesh {
+        let(models, _materials) = tobj::load_obj(path, true).unwrap();
+
+        //For the time being we're only going to load the first mesh in the model.
+        
+        let model = &models[0];
+
+        println!("Loading model {} into mesh", model.name);
+
+        let o_mesh = &model.mesh;
+
+        let indices : Vec<u16> = o_mesh.indices.iter().map(|i| *i as u16).collect();
+
+
+        let mut vertices : Vec<Vertex> = Vec::new();
+        
+        let num_vertices = (o_mesh.positions.len() / 3) as usize;
+
+
+        for ind in 0..num_vertices {
+
+            let ind_x = ind * 3 + 0;
+            let ind_y = ind * 3 + 1;
+            let ind_z = ind * 3 + 2;
+
+            let mut pos = cgmath::Vector3::new(0., 0., 0.);
+
+            pos.x = o_mesh.positions[ind_x];
+            pos.y = o_mesh.positions[ind_y];
+            pos.z = o_mesh.positions[ind_z];
+
+            let mut norm = cgmath::Vector3::new(0., 0., 0.);
+
+            if ind_x < o_mesh.normals.len() {
+                norm.x = o_mesh.normals[ind_x];
+                norm.y = o_mesh.normals[ind_y];
+                norm.z = o_mesh.normals[ind_z];
+            }
+
+            let mut uv = cgmath::Vector2::new(0., 0.);
+
+            if ind_x < o_mesh.texcoords.len() {
+                uv.x = o_mesh.texcoords[ind_x];
+                uv.y = o_mesh.texcoords[ind_y];
+            }
+
+            vertices.push(Vertex::new(
+                pos,
+                norm,
+                uv,
+            ));
+        }
+
+
+
+
+        Mesh {
+            vertices,
+            indices,
+            vertex_buffer: None,
+            index_buffer: None,
+        }
+    }
+
     pub fn new() -> Mesh {
         Mesh {
             vertices: Vec::new(),
@@ -121,62 +200,3 @@ impl Mesh {
         self.index_buffer.as_ref()
     }
 }
-
-/*struct Triangle {
-    vertex_buffer: wgpu::Buffer,
-    index_buffer: wgpu::Buffer,
-    vertices: Vec<rise::graphics::Vertex>,
-    indices: Vec<u16>,
-    material: rise::graphics::MaterialInstance
-}
-
-impl Triangle {
-    fn new(render_context: &rise::graphics::RenderContext, material: rise::graphics::MaterialInstance) -> Triangle {
-        
-        use rise::point;
-
-        let vertices = vec!(
-            point!(0.0, 0.5, 0.0),
-            point!(-0.5, -0.5, 0.0),
-            point!(0.5, -0.5, 0.0)
-        );
-
-        let indices : Vec<u16> = vec!(0, 1, 2);
-        
-        let vertex_buffer = render_context.device.create_buffer_with_data(
-            bytemuck::cast_slice(&vertices[..]),
-            wgpu::BufferUsage::VERTEX,
-        );
-        
-        let index_buffer = render_context.device.create_buffer_with_data(
-            bytemuck::cast_slice(&indices[..]),
-            wgpu::BufferUsage::INDEX,
-        );
-        
-        Triangle {
-            vertex_buffer,
-            index_buffer,
-            indices,
-            vertices,
-            material
-        }
-    }
-}
-
-impl rise::graphics::Drawable for Triangle {
-    fn get_material(&self) -> &rise::graphics::MaterialInstance {
-        &self.material
-    }
-
-    fn get_vertex_buffer(&self) -> &wgpu::Buffer {
-        &self.vertex_buffer
-    }
-    
-    fn get_index_buffer(&self) -> &wgpu::Buffer {
-        &self.index_buffer
-    }
-
-    fn num_indices(&self) -> u32 {
-        self.indices.len() as u32
-    }
-} */
