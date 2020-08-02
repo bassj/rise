@@ -123,19 +123,19 @@ impl rise::core::Application for Game {
 
         use cgmath::Rotation;
 
-        let forward = self.camera.rotation.rotate_vector(cgmath::Vector3::new(0., 0., -delta));
-        let right = self.camera.rotation.rotate_vector(cgmath::Vector3::new(delta, 0., 0.));
+        let forward = self.camera.transform.rotation.rotate_vector(cgmath::Vector3::new(0., 0., -delta));
+        let right = self.camera.transform.rotation.rotate_vector(cgmath::Vector3::new(delta, 0., 0.));
 
         if self.input.is_pressed(Key::S) {
-            self.camera.position -= forward;
+            self.camera.transform.position -= forward;
         } else if self.input.is_pressed(Key::W) {
-            self.camera.position += forward;
+            self.camera.transform.position += forward;
         }
 
         if self.input.is_pressed(Key::D) {
-            self.camera.position += right;
+            self.camera.transform.position += right;
         } else if self.input.is_pressed(Key::A) {
-            self.camera.position -= right;
+            self.camera.transform.position -= right;
         }
 
         let (delta_x, delta_y) = self.input.mouse_motion();
@@ -148,10 +148,10 @@ impl rise::core::Application for Game {
         }
         
         if self.mouse_locked {
-            println!("DX: {}, DY: {}", delta_x, delta_y);
+           // println!("DX: {}, DY: {}", delta_x, delta_y);
 
-            self.cam_yaw -= (delta_x as f32) * delta;
-            self.cam_pitch -= (delta_y as f32) * delta;
+            self.cam_yaw -= (delta_x as f32) * self.mouse_sensitivity * delta;
+            self.cam_pitch -= (delta_y as f32) * self.mouse_sensitivity * delta;
 
             let size = self.env.get_window().inner_size();
             
@@ -160,7 +160,7 @@ impl rise::core::Application for Game {
 
         use cgmath::Rotation3;
 
-        self.camera.rotation = cgmath::Quaternion::from(cgmath::Euler {
+        self.camera.transform.rotation = cgmath::Quaternion::from(cgmath::Euler {
             x: cgmath::Rad(0.0),
             y: cgmath::Rad(self.cam_yaw),
             z: cgmath::Rad(0.0)
@@ -168,7 +168,7 @@ impl rise::core::Application for Game {
 
         let right = cgmath::Vector3::new(1.0, 0.0, 0.0);
 
-        self.camera.rotation = self.camera.rotation * cgmath::Quaternion::from_axis_angle(right, cgmath::Rad(self.cam_pitch));
+        self.camera.transform.rotation = self.camera.transform.rotation * cgmath::Quaternion::from_axis_angle(right, cgmath::Rad(self.cam_pitch));
 
         self.input.update();
     }

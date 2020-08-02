@@ -1,6 +1,5 @@
 pub struct PerspectiveCamera {
-    pub position: cgmath::Vector3<f32>,
-    pub rotation: cgmath::Quaternion<f32>,
+    pub transform: crate::core::Transform,
     pub fov: f32,
     aspect_ratio: f32,
     near_plane: f32,
@@ -13,8 +12,7 @@ impl PerspectiveCamera {
         let aspect_ratio = (render_context.sc_desc.width as f32) / (render_context.sc_desc.height as f32);
 
         PerspectiveCamera {
-            position: cgmath::Vector3::new(0., 0., 0.),
-            rotation: cgmath::Quaternion::new(0., 0., 0., 0.),
+            transform: crate::core::Transform::new(),
             fov,
             aspect_ratio,
             near_plane: 0.1,
@@ -26,11 +24,11 @@ impl PerspectiveCamera {
 
         use cgmath::Rotation;
 
-        let forward = self.rotation.rotate_vector(cgmath::Vector3::new(0., 0., -1.));
-        let up = self.rotation.rotate_vector(cgmath::Vector3::new(0., 1., 0.));
+        let forward = self.transform.rotation.rotate_vector(cgmath::Vector3::new(0., 0., -1.));
+        let up = self.transform.rotation.rotate_vector(cgmath::Vector3::new(0., 1., 0.));
 
         let view_mat = cgmath::Matrix4::look_at_dir(
-            cgmath::Point3::from((self.position.x, self.position.y, self.position.z)),
+            cgmath::Point3::from((self.transform.position.x, self.transform.position.y, self.transform.position.z)),
             forward,
             up
         );
