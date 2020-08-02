@@ -82,6 +82,7 @@ impl rise::core::Application for Game {
 
         let forward = self.camera.transform.rotation.rotate_vector(cgmath::Vector3::new(0., 0., -delta));
         let right = self.camera.transform.rotation.rotate_vector(cgmath::Vector3::new(delta, 0., 0.));
+        let up = self.camera.transform.rotation.rotate_vector(cgmath::Vector3::new(0., delta, 0.));
 
         if self.input.is_pressed(Key::S) {
             self.camera.transform.position -= forward;
@@ -93,6 +94,12 @@ impl rise::core::Application for Game {
             self.camera.transform.position += right;
         } else if self.input.is_pressed(Key::A) {
             self.camera.transform.position -= right;
+        }
+
+        if self.input.is_pressed(Key::Space) {
+            self.camera.transform.position += up;
+        } else if self.input.is_pressed(Key::LShift) {
+            self.camera.transform.position -= up;
         }
 
         let (delta_x, delta_y) = self.input.mouse_motion();

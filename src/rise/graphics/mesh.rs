@@ -48,7 +48,9 @@ unsafe impl bytemuck::Pod for Vertex {}
 macro_rules! point {
     ($x:expr, $y:expr, $z:expr) => {
         $crate::graphics::Vertex::new(
-            cgmath::Vector3::<f32>::new($x, $y, $z)
+            cgmath::Vector3::new($x, $y, $z),
+            cgmath::Vector3::new(0., 0., 0.),
+            cgmath::Vector2::new(0., 0.)
         );
     }
 }
@@ -98,6 +100,9 @@ impl Mesh {
                 norm.x = o_mesh.normals[ind_x];
                 norm.y = o_mesh.normals[ind_y];
                 norm.z = o_mesh.normals[ind_z];
+
+
+                //println!("Normal: {} {} {}", norm.x, norm.y, norm.z);
             }
 
             let mut uv = cgmath::Vector2::new(0., 0.);
