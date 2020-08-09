@@ -58,7 +58,7 @@ impl RenderContext {
         };
 
         let swap_chain = device.create_swap_chain(&surface, &sc_desc);
-        
+
         RenderContext {
             surface,
             adapter,
@@ -92,7 +92,7 @@ pub struct Frame<'r> {
 }
 
 impl<'r> Frame<'r> {
-    pub fn render<D: Drawable>(&mut self, objects: &[&D]) {
+    pub fn render<D: Drawable>(&mut self, objects: &[&D], material: &crate::graphics::Material) {
         let mut render_pass = self.encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             color_attachments: &[
                 wgpu::RenderPassColorAttachmentDescriptor {
@@ -108,14 +108,20 @@ impl<'r> Frame<'r> {
                     },
                 }
             ],
-            depth_stencil_attachment: None,
+            depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachmentDescriptor {
+                attachment: material.get_depth_texture().get_view(),
+                depth_load_op: wgpu::LoadOp::Clear,
+                depth_store_op: wgpu::StoreOp::Store,
+                clear_depth: 1.0,
+                stencil_load_op: wgpu::LoadOp::Clear,
+                stencil_store_op: wgpu::StoreOp::Store,
+                clear_stencil: 0
+            }),
         });
 
         for obj in objects {
-            let mat = obj.get_material().get_base_material();
-
-            render_pass.set_bind_group(0, mat.get_uniforms().get_camera(), &[]);
-            render_pass.set_pipeline(mat.get_render_pipeline());
+            render_pass.set_bind_group(0, material.get_uniforms().get_camera(), &[]);
+            render_pass.set_pipeline(material.get_render_pipeline());
             render_pass.set_vertex_buffer(0, obj.get_vertex_buffer(), 0, 0);
             render_pass.set_index_buffer(obj.get_index_buffer(), 0, 0);
 

@@ -6,7 +6,7 @@ struct Cube {
 impl Cube {
     fn new(render_context: &rise::graphics::RenderContext, material: rise::graphics::MaterialInstance) -> Cube {
         
-        let mut mesh = rise::graphics::Mesh::load_from_file("./res/model/cube.obj");
+        let mut mesh = rise::graphics::Mesh::load_from_file("./res/model/monkey.obj");
         
         mesh.create(render_context);
 
@@ -143,7 +143,7 @@ impl rise::core::Application for Game {
         
         let mut frame = rise::graphics::begin_frame(render_context);
 
-        frame.render(&[&self.triangle]);
+        frame.render(&[&self.triangle], &self.standard_material);
         
         rise::graphics::end_frame(frame);
     }

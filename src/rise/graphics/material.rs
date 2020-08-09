@@ -52,6 +52,7 @@ impl UniformManager {
 
 pub struct Material {
     render_pipeline: wgpu::RenderPipeline,
+    depth_texture: crate::graphics::Texture,
     uniforms: UniformManager
 }
 
@@ -99,6 +100,8 @@ impl Material {
             label: Some("camera_uniform_bind_group"),
         });
 
+        let depth_texture = crate::graphics::Texture::create_depth_texture(&render_context);
+
         let render_pipeline_layout =
             render_context.device
                 .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
@@ -135,7 +138,15 @@ impl Material {
                 }],
 
                 primitive_topology: wgpu::PrimitiveTopology::TriangleList,
-                depth_stencil_state: None,
+                depth_stencil_state: Some(wgpu::DepthStencilStateDescriptor {
+                    format: wgpu::TextureFormat::Depth32Float,
+                    depth_write_enabled: true,
+                    depth_compare: wgpu::CompareFunction::LessEqual,
+                    stencil_front: wgpu::StencilStateFaceDescriptor::IGNORE,
+                    stencil_back: wgpu::StencilStateFaceDescriptor::IGNORE,
+                    stencil_read_mask: 0,
+                    stencil_write_mask: 0,
+                }),
                 vertex_state: wgpu::VertexStateDescriptor {
                     index_format: wgpu::IndexFormat::Uint16,
                     vertex_buffers: &[Vertex::desc()],
@@ -162,6 +173,7 @@ impl Material {
 
         Material {
             render_pipeline,
+            depth_texture,
             uniforms
         }
     }
@@ -184,6 +196,10 @@ impl Material {
 
     pub fn set_camera<C: Into<CameraUniform>>(&self, render_context: &crate::graphics::RenderContext, camera: C) {
         self.uniforms.set_camera(render_context, camera.into());
+    }
+
+    pub fn get_depth_texture(&self) -> &crate::graphics::Texture {
+        &self.depth_texture
     }
 
     pub fn get_render_pipeline(&self) -> &wgpu::RenderPipeline {
