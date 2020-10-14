@@ -46,7 +46,7 @@ fn build_environment() -> (Window, EventLoop<()>) {
 }
 
 ///The main entry point for any rise application.
-pub fn run_application<A: 'static + Application>() {
+pub fn run_application<A: 'static + Application>() -> Result<(), Box<dyn std::error::Error>>{
     
     //Build our application environment.
     let (window, event_loop) = build_environment();
@@ -55,7 +55,7 @@ pub fn run_application<A: 'static + Application>() {
 
     //Set up the renderering context.
     use futures::executor::block_on;
-    let mut render_context = block_on(crate::graphics::RenderContext::create(&window));
+    let mut render_context = block_on(crate::graphics::RenderContext::create(&window))?;
 
     let env = ApplicationEnvironment{
         window: window.clone()

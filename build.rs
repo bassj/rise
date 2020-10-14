@@ -1,7 +1,7 @@
 fn main() {
     // Recompile shaders if we change them.
-    println!("cargo:rerun-if-changed=res/shader");
-    
+    println!("cargo:rerun-if-changed=res/shader/*");
+     
     // Use shaderc to build the shaders.
     let mut compiler = shaderc::Compiler::new().unwrap();
     

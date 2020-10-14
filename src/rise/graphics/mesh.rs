@@ -1,3 +1,5 @@
+use log::{error};
+
 #[derive(Copy, Clone, Debug)]
 pub struct Vertex {
     position: cgmath::Vector3<f32>,
@@ -107,10 +109,8 @@ impl Mesh {
 
             let mut uv = cgmath::Vector2::new(0., 0.);
 
-            if ind_x < o_mesh.texcoords.len() {
-                uv.x = o_mesh.texcoords[ind_x];
-                uv.y = o_mesh.texcoords[ind_y];
-            }
+            uv.x = o_mesh.texcoords[ind * 2 + 0];
+            uv.y = o_mesh.texcoords[ind * 2 + 1];
 
             vertices.push(Vertex::new(
                 pos,
@@ -143,8 +143,16 @@ impl Mesh {
         self.vertices = vertices.into_iter().collect()
     }
 
+    pub fn get_vertices(&self) -> &Vec<Vertex> {
+        &self.vertices
+    }
+
     pub fn set_indices<I: IntoIterator<Item=u16>>(&mut self, indices: I) {
         self.indices = indices.into_iter().collect();
+    }
+
+    pub fn get_indices(&self) -> &Vec<u16> {
+        &self.indices
     }
 
     pub fn add_vertex(&mut self, vertex: Vertex) {
@@ -156,42 +164,61 @@ impl Mesh {
     }
 
     pub fn create(&mut self, render_context: &crate::graphics::RenderContext) {
-        if self.index_buffer != std::option::Option::None || self.vertex_buffer != std::option::Option::None {
+        if self.index_buffer.is_some() || self.vertex_buffer.is_some() {
             panic!("Attempted to create mesh twice");
         }
 
-        let vertex_buffer = render_context.device.create_buffer_with_data(
-            bytemuck::cast_slice(&self.vertices[..]),
-            wgpu::BufferUsage::VERTEX
+        use wgpu::util::DeviceExt;
+
+        let vertex_buffer = render_context.device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Vertex Buffer"),
+                contents: bytemuck::cast_slice(&self.vertices[..]),
+                usage: wgpu::BufferUsage::VERTEX
+            }
         );
 
         self.vertex_buffer = Some(vertex_buffer);
 
-        let index_buffer = render_context.device.create_buffer_with_data(
-            bytemuck::cast_slice(&self.indices[..]),
-            wgpu::BufferUsage::INDEX    
+        let index_buffer = render_context.device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Index Buffer"),
+                contents: bytemuck::cast_slice(&self.indices[..]),
+                usage: wgpu::BufferUsage::INDEX  
+            }
         );
 
         self.index_buffer = Some(index_buffer);
     }
 
     pub fn update(&mut self, render_context: &crate::graphics::RenderContext) { 
-        if self.index_buffer == std::option::Option::None || self.vertex_buffer == std::option::Option::None {
-            panic!("Attempted to update mesh before creation.");
+        
+        if self.index_buffer.is_none() || self.vertex_buffer.is_none() {
+            error!("Attempted to update mesh before creation.");
+            return;
         }
 
         //TODO: Try to see if we can add data without creating new buffer.
 
-        let vertex_buffer = render_context.device.create_buffer_with_data(
-            bytemuck::cast_slice(&self.vertices[..]),
-            wgpu::BufferUsage::VERTEX
+        use wgpu::util::DeviceExt;
+        
+        let vertex_buffer = render_context.device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Vertex Buffer"),
+                contents: bytemuck::cast_slice(&self.vertices[..]),
+                usage: wgpu::BufferUsage::VERTEX
+            }
         );
 
         self.vertex_buffer = Some(vertex_buffer);
 
-        let index_buffer = render_context.device.create_buffer_with_data(
-            bytemuck::cast_slice(&self.indices[..]),
-            wgpu::BufferUsage::INDEX    
+        let index_buffer = render_context.device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Index Buffer"),
+                contents: bytemuck::cast_slice(&self.indices[..]),
+                usage: wgpu::BufferUsage::INDEX 
+            }
+               
         );
 
         self.index_buffer = Some(index_buffer);

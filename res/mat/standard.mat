@@ -1,4 +1,14 @@
 {
-    "vertex_stage": "res/shader/standard.vert.spv",
-    "fragment_stage": "res/shader/standard.frag.spv"
+    "vertex_stage": "res/shader/pbr.vert.spv",
+    "fragment_stage": "res/shader/pbr.frag.spv",
+    "uniforms": [
+        {
+            "type": "camera",
+            "name": "camera"
+        },
+        {
+            "type": "texture",
+            "name": "diffuse"
+        }
+    ]
 }

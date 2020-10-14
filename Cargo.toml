@@ -15,7 +15,7 @@ path = "src/sandbox/sandbox.rs"
 
 [dependencies]
 winit = {version = "0.22.2", features = ["web-sys"]}
-wgpu = {version = "0.5.2"}
+wgpu = {version = "0.6.0"}
 image = "0.23"
 log = "0.4"
 cgmath = "0.17.0"
